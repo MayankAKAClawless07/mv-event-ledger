@@ -1,0 +1,5 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/001-create-gateway-event-tables.sql
+  - include:
+      file: db/changelog/002-create-account-service-tables.sql

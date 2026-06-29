@@ -101,3 +101,8 @@ coverage/
 jacoco.exec
 jacoco/
 site/
+**/.mvn/*
+/event-ledger-domain/.mvn/*
+/event-gateway-api/.mvn/*
+/*/mvnw.cmd
+/*/mvnw

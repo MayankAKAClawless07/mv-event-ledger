@@ -1,0 +1,18 @@
+services:
+  account-service:
+    build:
+      context: .
+      dockerfile: account-service/Dockerfile
+    ports:
+      - "8081:8081"
+
+  event-gateway-api:
+    build:
+      context: .
+      dockerfile: event-gateway-api/Dockerfile
+    environment:
+      ACCOUNT_SERVICE_BASE_URL: http://account-service:8081
+    ports:
+      - "8080:8080"
+    depends_on:
+      - account-service
