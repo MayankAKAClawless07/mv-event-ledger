@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 
 @Service
 public class AccountValidationService {
@@ -29,11 +28,9 @@ public class AccountValidationService {
         if (Boolean.TRUE.equals(accountCache.get(accountId))) {
             return;
         }
-        try {
-            accountServiceClient.getAccount(accountId);
-            accountCache.put(accountId, Boolean.TRUE);
-        } catch (HttpClientErrorException.NotFound ex) {
+        if (!accountServiceClient.accountExists(accountId)) {
             throw new InvalidAccountException("Invalid accountId: " + accountId);
         }
+        accountCache.put(accountId, Boolean.TRUE);
     }
 }

@@ -76,11 +76,7 @@ public class AccountApplicationService {
             String accountId,
             com.mv.event_ledger_domain.model.AccountTransaction request) {
         Account account = accountRepository.findByAccountId(accountId)
-                .orElseGet(() -> Account.builder()
-                        .accountId(accountId)
-                        .currency(request.getCurrency())
-                        .balance(BigDecimal.ZERO)
-                        .build());
+                .orElseThrow(() -> new EntityNotFoundException("Account not found: " + accountId));
         BigDecimal signedAmount = request.getType() == Type.CREDIT
                 ? request.getAmount()
                 : request.getAmount().negate();

@@ -22,21 +22,21 @@ class AccountValidationServiceTest {
     void cachesSuccessfulAccountValidation() {
         properties.setAccountCacheSize(10);
         AccountValidationService service = new AccountValidationService(accountServiceClient, properties);
-        when(accountServiceClient.getAccount("ACCTUNIT1")).thenReturn(account("ACCTUNIT1"));
+        when(accountServiceClient.accountExists("ACCTUNIT1")).thenReturn(true);
 
         service.validateAccountId("ACCTUNIT1");
         service.validateAccountId("ACCTUNIT1");
 
-        verify(accountServiceClient, times(1)).getAccount("ACCTUNIT1");
+        verify(accountServiceClient, times(1)).accountExists("ACCTUNIT1");
     }
 
     @Test
     void evictsLeastRecentlyUsedAccountWhenCacheIsFull() {
         properties.setAccountCacheSize(2);
         AccountValidationService service = new AccountValidationService(accountServiceClient, properties);
-        when(accountServiceClient.getAccount("ACCTLRU1")).thenReturn(account("ACCTLRU1"));
-        when(accountServiceClient.getAccount("ACCTLRU2")).thenReturn(account("ACCTLRU2"));
-        when(accountServiceClient.getAccount("ACCTLRU3")).thenReturn(account("ACCTLRU3"));
+        when(accountServiceClient.accountExists("ACCTLRU1")).thenReturn(true);
+        when(accountServiceClient.accountExists("ACCTLRU2")).thenReturn(true);
+        when(accountServiceClient.accountExists("ACCTLRU3")).thenReturn(true);
 
         service.validateAccountId("ACCTLRU1");
         service.validateAccountId("ACCTLRU2");
@@ -44,16 +44,16 @@ class AccountValidationServiceTest {
         service.validateAccountId("ACCTLRU3");
         service.validateAccountId("ACCTLRU2");
 
-        verify(accountServiceClient, times(1)).getAccount("ACCTLRU1");
-        verify(accountServiceClient, times(2)).getAccount("ACCTLRU2");
-        verify(accountServiceClient, times(1)).getAccount("ACCTLRU3");
+        verify(accountServiceClient, times(1)).accountExists("ACCTLRU1");
+        verify(accountServiceClient, times(2)).accountExists("ACCTLRU2");
+        verify(accountServiceClient, times(1)).accountExists("ACCTLRU3");
     }
 
     @Test
     void convertsAccountNotFoundToValidationException() {
         properties.setAccountCacheSize(10);
         AccountValidationService service = new AccountValidationService(accountServiceClient, properties);
-        when(accountServiceClient.getAccount("UNKNOWN1")).thenThrow(HttpClientErrorException.NotFound.class);
+        when(accountServiceClient.accountExists("UNKNOWN1")).thenReturn(false);
 
         assertThatThrownBy(() -> service.validateAccountId("UNKNOWN1"))
                 .isInstanceOf(InvalidAccountException.class)

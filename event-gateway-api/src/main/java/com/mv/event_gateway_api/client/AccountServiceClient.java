@@ -9,6 +9,7 @@ import io.github.resilience4j.ratelimiter.annotation.RateLimiter;
 import io.github.resilience4j.retry.annotation.Retry;
 import java.util.Map;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -44,6 +45,22 @@ public class AccountServiceClient {
                 AccountBalance.class,
                 accountId
         );
+    }
+
+    @CircuitBreaker(name = "accountService")
+    @Retry(name = "accountService")
+    @RateLimiter(name = "accountService")
+    public boolean accountExists(String accountId) {
+        try {
+            restTemplate.getForObject(
+                    properties.getBaseUrl() + "/accounts/{accountId}",
+                    Account.class,
+                    accountId
+            );
+            return true;
+        } catch (HttpClientErrorException.NotFound ex) {
+            return false;
+        }
     }
 
     @CircuitBreaker(name = "accountService")

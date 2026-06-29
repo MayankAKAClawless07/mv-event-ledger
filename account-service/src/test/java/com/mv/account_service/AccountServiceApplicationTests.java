@@ -31,8 +31,18 @@ class AccountServiceApplicationTests {
 
     @Test
     void appliesTransactionsIdempotentlyAndComputesBalance() throws Exception {
+        Account account = Account.builder()
+                .accountId("ACCTBAL1")
+                .balance(BigDecimal.ZERO)
+                .currency("USD")
+                .build();
         AccountTransaction credit = transaction("TXN12345", "ACCTBAL1", Type.CREDIT, "150.00");
         AccountTransaction debit = transaction("TXN67890", "ACCTBAL1", Type.DEBIT, "25.00");
+
+        mockMvc.perform(post("/accounts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(account)))
+                .andExpect(status().isCreated());
 
         mockMvc.perform(post("/accounts/ACCTBAL1/transactions")
                         .header("X-Trace-Id", "trace-account")
@@ -108,6 +118,17 @@ class AccountServiceApplicationTests {
                         .content(objectMapper.writeValueAsString(transaction)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("amount: amount must be greater than 0"));
+    }
+
+    @Test
+    void rejectsTransactionForMissingAccount() throws Exception {
+        AccountTransaction transaction = transaction("MISSACC1", "MISSACC1", Type.CREDIT, "10.00");
+
+        mockMvc.perform(post("/accounts/MISSACC1/transactions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(transaction)))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.message").value("Account not found: MISSACC1"));
     }
 
     private AccountTransaction transaction(String eventId, String accountId, Type type, String amount) {
