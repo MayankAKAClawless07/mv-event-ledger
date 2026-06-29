@@ -1,3 +1,59 @@
 spring:
   application:
     name: event-gateway-api
+  datasource:
+    url: jdbc:h2:mem:gatewaydb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    contexts: gateway
+
+server:
+  port: 8080
+
+account-service:
+  base-url: http://localhost:8081
+  account-cache-size: 1000
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      accountService:
+        slidingWindowSize: 4
+        minimumNumberOfCalls: 2
+        failureRateThreshold: 50
+        waitDurationInOpenState: 5s
+        ignoreExceptions:
+          - org.springframework.web.client.HttpClientErrorException$NotFound
+  retry:
+    instances:
+      accountService:
+        maxAttempts: 3
+        waitDuration: 200ms
+        retryExceptions:
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.HttpServerErrorException
+        ignoreExceptions:
+          - org.springframework.web.client.HttpClientErrorException$NotFound
+  ratelimiter:
+    instances:
+      accountService:
+        limitForPeriod: 20
+        limitRefreshPeriod: 1s
+        timeoutDuration: 0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
